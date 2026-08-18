@@ -1,0 +1,61 @@
+---
+name: ztp-demo
+
+prefix: ""
+
+mgmt:
+  network: mgmt
+  ipv4-subnet: 172.100.100.0/24
+
+topology:
+
+  kinds:
+    arista_ceos:
+      enforce-startup-config: false
+      image: arista/ceos:latest
+      env:
+        CLAB_MGMT_VRF: MGMT
+        INTFTYPE: et
+    linux:
+      image: ghcr.io/aristanetworks/aclabs/host-ubuntu:rev1.6
+
+  nodes:
+
+    ztp-switch1:
+      kind: arista_ceos
+      mgmt-ipv4: 172.100.100.101
+      binds:
+        - sn/ztp-switch1.txt:/mnt/flash/ceos-config:ro
+        - cv-onboarding-token:/mnt/flash/cv-onboarding-token
+        - zerotouch-config:/mnt/flash/zerotouch-config:ro
+      startup-config: ./clab/configs/empty.cfg
+      ports:
+        - 4011:443/tcp
+      
+    ztp-switch2:
+      kind: arista_ceos
+      mgmt-ipv4: 172.100.100.102
+      binds:
+        - sn/ztp-switch2.txt:/mnt/flash/ceos-config:ro
+        - cv-onboarding-token:/mnt/flash/cv-onboarding-token
+        - zerotouch-config:/mnt/flash/zerotouch-config:ro
+      startup-config: ./clab/configs/empty.cfg
+      ports:
+        - 4011:443/tcp
+      
+    server01:
+      kind: arista_ceos
+      mgmt-ipv4: 172.100.100.103
+      binds:
+        - sn/a-spine1.txt:/mnt/flash/ceos-config:ro
+        - cv-onboarding-token:/mnt/flash/cv-onboarding-token
+      startup-config: ./clab/configs/empty.cfg
+      ports:
+        - 4011:443/tcp
+
+  links:
+    # MLAG Link
+    - endpoints: [ "ztp-switch1:et3", "ztp-switch2:et3" ]
+    
+    # MLAG Member Leaf
+    - endpoints: [ "ztp-switch1:et1", "server01:et1" ]
