@@ -28,7 +28,7 @@ prefix: ""
 # This is where ZTP DHCP/HTTP traffic flows between the switches and ztp-switch3.
 mgmt:
   network: mgmt
-  ipv4-subnet: 172.100.100.0/24
+  ipv4-subnet: 192.168.128.0/24
 
 topology:
 
@@ -40,7 +40,7 @@ topology:
       # When false, the switch won't enforce a startup config on boot.
       # This is required for ZTP — the switch must boot "clean" with no config.
       enforce-startup-config: false
-      image: arista/ceos:latest
+      image: ceos:4.35.6M
       env:
         # Place the management interface in VRF "MGMT" (standard Arista practice)
         CLAB_MGMT_VRF: MGMT
@@ -55,9 +55,9 @@ topology:
     # ---- ZTP Switch 1 (boots into ZTP mode) ----
     ztp-switch1:
       kind: arista_ceos
-      mgmt-ipv4: 172.100.100.101
+      mgmt-ipv4: 192.168.128.101
       # Empty startup config + zerotouch-config = switch enters ZTP on boot
-      startup-config: ./clab/configs/empty.cfg
+      startup-config: configs/empty.cfg
       binds:
         # Serial number file — gives the cEOS container a unique identity
         - sn/ztp-switch1.txt:/mnt/flash/ceos-config:ro
@@ -70,8 +70,8 @@ topology:
     # ---- ZTP Switch 2 (boots into ZTP mode) ----
     ztp-switch2:
       kind: arista_ceos
-      mgmt-ipv4: 172.100.100.102
-      startup-config: ./clab/configs/empty.cfg
+      mgmt-ipv4: 192.168.128.102
+      startup-config: configs/empty.cfg
       binds:
         - sn/ztp-switch2.txt:/mnt/flash/ceos-config:ro
         - zerotouch-config:/mnt/flash/zerotouch-config:ro
@@ -84,8 +84,8 @@ topology:
     # script to ztp-switch1 and ztp-switch2.
     ztp-switch3:
       kind: arista_ceos
-      mgmt-ipv4: 172.100.100.103
-      startup-config: ./clab/configs/empty.cfg
+      mgmt-ipv4: 192.168.128.103
+      startup-config: configs/empty.cfg
       binds:
         - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
         - zerotouch-config:/mnt/flash/zerotouch-config:ro
@@ -94,13 +94,13 @@ topology:
 
     server01:
       kind: arista_ceos
-      mgmt-ipv4: 172.100.100.104
+      mgmt-ipv4: 192.168.128.104
       # Full startup config — DHCP server + HTTP server for bootstrap delivery
-      startup-config: ./clab/configs/server01.cfg
+      startup-config: configs/server01.cfg
       binds:
         - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
         # Bootstrap script directory — served over HTTP to ZTP switches
-        - bootstrap/:/mnt/flash/bootstrap/:ro
+        - bootstrap/:/usr/share/nginx/html/eapi/:ro
       ports:
         - 4004:443/tcp
     
@@ -111,6 +111,7 @@ topology:
   # This link is for testing connectivity after ZTP completes.
   # (ZTP itself happens over the management network, not this link.)
   links:
+    - endpoints: ["server01:et1", "ztp-switch1:et2"]
     - endpoints: ["ztp-switch1:et3", "ztp-switch2:et3"]
-    # - endpoints: ["ztp-switch1:et1", "ztp-switch3:et1"]
-    # - endpoints: ["ztp-switch2:et1", "ztp-switch3:et2"]
+    - endpoints: ["ztp-switch1:et1", "ztp-switch3:et1"]
+    - endpoints: ["ztp-switch2:et1", "ztp-switch3:et2"]

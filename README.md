@@ -106,3 +106,26 @@ Edit `clab/bootstrap/bootstrap.py` with your desired ZTP logic. Common tasks:
 - Apply a startup configuration
 - Install EOS extensions
 - Register with a management platform (e.g., CloudVision)
+
+## Removnig AppArmor
+
+Disabling apparomor 
+
+```bash
+sudo vi /etc/default/grub
+```
+
+Change the line
+
+```bash
+GRUB_CMDLINE_LINUX=""
+to
+GRUB_CMDLINE_LINUX="apparmor=0"
+```
+
+Run the following to update and reboot
+
+```bash
+sudo update-grub
+sudo reboot
+```

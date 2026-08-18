@@ -1,0 +1,40 @@
+{
+  "freeTextAnnotations": [],
+  "freeShapeAnnotations": [],
+  "trafficRateAnnotations": [],
+  "groupStyleAnnotations": [],
+  "networkNodeAnnotations": [],
+  "nodeAnnotations": [
+    {
+      "id": "ztp-switch1",
+      "position": {
+        "x": 160,
+        "y": 340
+      }
+    },
+    {
+      "id": "ztp-switch2",
+      "position": {
+        "x": 340,
+        "y": 340
+      }
+    },
+    {
+      "id": "ztp-switch3",
+      "position": {
+        "x": 240,
+        "y": 440
+      }
+    },
+    {
+      "id": "server01",
+      "position": {
+        "x": 240,
+        "y": 200
+      }
+    }
+  ],
+  "edgeAnnotations": [],
+  "aliasEndpointAnnotations": [],
+  "viewerSettings": {}
+}
