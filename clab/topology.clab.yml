@@ -1,61 +1,116 @@
+# =============================================================================
+# Containerlab Topology: Arista ZTP Demo
+# =============================================================================
+#
+# This topology creates a small lab for testing Arista's Zero Touch Provisioning
+# (ZTP). ZTP allows network switches to automatically download and apply their
+# configuration when they boot up for the first time — no manual setup needed.
+#
+# How it works:
+#   1. ztp-switch1 and ztp-switch2 boot with NO configuration (ZTP mode)
+#   2. They send a DHCP request over the management network
+#   3. ztp-switch3 runs a DHCP server that responds with:
+#      - An IP address for the switch
+#      - The URL of a Python bootstrap script
+#   4. The switch downloads and runs the bootstrap script from ztp-switch3's
+#      HTTP server, which configures the switch automatically
+#
+# To deploy:  containerlab deploy -t clab/topology.clab.yml
+# To destroy: containerlab destroy -t clab/topology.clab.yml
+# =============================================================================
 ---
 name: ztp-demo
 
+# No prefix means container names match node names exactly (e.g., "ztp-switch1")
 prefix: ""
 
+# Management network — all nodes connect to this network automatically.
+# This is where ZTP DHCP/HTTP traffic flows between the switches and ztp-switch3.
 mgmt:
   network: mgmt
   ipv4-subnet: 172.100.100.0/24
 
 topology:
 
+  # ---------------------------------------------------------------------------
+  # Node defaults by kind
+  # ---------------------------------------------------------------------------
   kinds:
     arista_ceos:
+      # When false, the switch won't enforce a startup config on boot.
+      # This is required for ZTP — the switch must boot "clean" with no config.
       enforce-startup-config: false
       image: arista/ceos:latest
       env:
+        # Place the management interface in VRF "MGMT" (standard Arista practice)
         CLAB_MGMT_VRF: MGMT
+        # Use "et" (Ethernet) interface naming instead of the default
         INTFTYPE: et
-    linux:
-      image: ghcr.io/aristanetworks/aclabs/host-ubuntu:rev1.6
 
+  # ---------------------------------------------------------------------------
+  # Nodes
+  # ---------------------------------------------------------------------------
   nodes:
 
+    # ---- ZTP Switch 1 (boots into ZTP mode) ----
     ztp-switch1:
       kind: arista_ceos
       mgmt-ipv4: 172.100.100.101
-      binds:
-        - sn/ztp-switch1.txt:/mnt/flash/ceos-config:ro
-        - cv-onboarding-token:/mnt/flash/cv-onboarding-token
-        - zerotouch-config:/mnt/flash/zerotouch-config:ro
+      # Empty startup config + zerotouch-config = switch enters ZTP on boot
       startup-config: ./clab/configs/empty.cfg
+      binds:
+        # Serial number file — gives the cEOS container a unique identity
+        - sn/ztp-switch1.txt:/mnt/flash/ceos-config:ro
+        # ZTP control file — when this does NOT contain "DISABLE=True",
+        # the switch will enter ZTP mode on boot
+        - zerotouch-config:/mnt/flash/zerotouch-config:ro
       ports:
-        - 4011:443/tcp
-      
+        - 4001:443/tcp
+
+    # ---- ZTP Switch 2 (boots into ZTP mode) ----
     ztp-switch2:
       kind: arista_ceos
       mgmt-ipv4: 172.100.100.102
+      startup-config: ./clab/configs/empty.cfg
       binds:
         - sn/ztp-switch2.txt:/mnt/flash/ceos-config:ro
-        - cv-onboarding-token:/mnt/flash/cv-onboarding-token
         - zerotouch-config:/mnt/flash/zerotouch-config:ro
-      startup-config: ./clab/configs/empty.cfg
       ports:
-        - 4011:443/tcp
-      
-    server01:
+        - 4002:443/tcp
+
+    # ---- ZTP Switch 3 (ZTP server — DHCP + HTTP) ----
+    # This switch boots with a full configuration. It is NOT in ZTP mode.
+    # It runs a DHCP server and an HTTP server to deliver the bootstrap
+    # script to ztp-switch1 and ztp-switch2.
+    ztp-switch3:
       kind: arista_ceos
       mgmt-ipv4: 172.100.100.103
-      binds:
-        - sn/a-spine1.txt:/mnt/flash/ceos-config:ro
-        - cv-onboarding-token:/mnt/flash/cv-onboarding-token
       startup-config: ./clab/configs/empty.cfg
+      binds:
+        - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
+        - zerotouch-config:/mnt/flash/zerotouch-config:ro
       ports:
-        - 4011:443/tcp
+        - 4003:443/tcp
 
-  links:
-    # MLAG Link
-    - endpoints: [ "ztp-switch1:et3", "ztp-switch2:et3" ]
+    server01:
+      kind: arista_ceos
+      mgmt-ipv4: 172.100.100.104
+      # Full startup config — DHCP server + HTTP server for bootstrap delivery
+      startup-config: ./clab/configs/server01.cfg
+      binds:
+        - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
+        # Bootstrap script directory — served over HTTP to ZTP switches
+        - bootstrap/:/mnt/flash/bootstrap/:ro
+      ports:
+        - 4004:443/tcp
     
-    # MLAG Member Leaf
-    - endpoints: [ "ztp-switch1:et1", "server01:et1" ]
+  # ---------------------------------------------------------------------------
+  # Links
+  # ---------------------------------------------------------------------------
+  # A single data-plane link connecting the two ZTP switches.
+  # This link is for testing connectivity after ZTP completes.
+  # (ZTP itself happens over the management network, not this link.)
+  links:
+    - endpoints: ["ztp-switch1:et3", "ztp-switch2:et3"]
+    # - endpoints: ["ztp-switch1:et1", "ztp-switch3:et1"]
+    # - endpoints: ["ztp-switch2:et1", "ztp-switch3:et2"]
