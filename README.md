@@ -50,8 +50,14 @@ make stop      # tear down the lab
 Connect to a switch:
 
 ```bash
+# Follow Console logs to watch ZTP
+docker logs ztp-switch1 -f
+
+# Login via docker direct to check config
 docker exec -it ztp-switch1 Cli
-show zerotouch
+
+# Or just login via ssh
+ssh arista@ztp-switch1
 ```
 
 ## How It Works
