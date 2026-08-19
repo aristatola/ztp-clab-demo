@@ -9,8 +9,8 @@
       "type": "macvlan",
       "label": "macvlan:enp86s0",
       "position": {
-        "x": 240,
-        "y": 80
+        "x": 340,
+        "y": 120
       }
     }
   ],
@@ -37,10 +37,10 @@
       }
     },
     {
-      "id": "server01",
+      "id": "mgmt-sw01",
       "position": {
-        "x": 240,
-        "y": 200
+        "x": 340,
+        "y": 220
       }
     }
   ],

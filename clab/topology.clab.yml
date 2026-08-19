@@ -92,11 +92,11 @@ topology:
       ports:
         - 4003:443/tcp
 
-    server01:
+    mgmt-sw01:
       kind: arista_ceos
       mgmt-ipv4: 192.168.128.104
       # Full startup config — DHCP server + HTTP server for bootstrap delivery
-      startup-config: configs/server01.cfg
+      startup-config: configs/mgmt-sw01.cfg
       binds:
         - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
         # Bootstrap script directory — served over HTTP to ZTP switches
@@ -112,10 +112,13 @@ topology:
   # (ZTP itself happens over the management network, not this link.)
   links:
 
-    # Server Connections
-    - endpoints: ["server01:et1", "ztp-switch1:et2"]
-    # - endpoints: ["server01:et2", "ztp-switch2:et2"]
-    - endpoints: ["server01:et3", "macvlan:enp86s0"]
+    # Mgmt Internet
+    - endpoints: ["mgmt-sw01:et10", "macvlan:enp86s0"]
+
+    # Mgmt to Network
+    - endpoints: ["mgmt-sw01:et1", "ztp-switch1:et10"]
+    - endpoints: ["mgmt-sw01:et2", "ztp-switch2:et10"]
+    - endpoints: ["mgmt-sw01:et3", "ztp-switch3:et10"]
 
     # Switch Connections
     - endpoints: ["ztp-switch1:et1", "ztp-switch3:et1"]
