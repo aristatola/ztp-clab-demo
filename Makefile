@@ -18,3 +18,27 @@ inspect: ## Inspect ceos lab
 	@echo ""
 	@echo "You can check the lab status, hostnames and management addresses above."
 	@echo "To connect to a lab device use \`ssh admin@<hostname>\` and password \`admin\`."
+
+.PHONY: ssh-sw1
+ssh-sw1: ## Connect to switch1
+	docker exec -it ztp-switch1 Cli
+
+.PHONY: ssh-sw2
+ssh-sw2: ## Connect to switch2
+	docker exec -it ztp-switch2 Cli
+
+.PHONY: ssh-sw3
+ssh-sw3: ## Connect to switch3
+	docker exec -it ztp-switch3 Cli
+
+.PHONY: watch-sw1
+watch-sw1: ## Destroy ceos lab
+	docker logs ztp-switch1 -f
+
+.PHONY: watch-sw2
+watch-sw2: ## Destroy ceos lab
+	docker logs ztp-switch2 -f
+
+.PHONY: watch-sw3
+watch-sw3: ## Destroy ceos lab
+	docker logs ztp-switch3 -f
