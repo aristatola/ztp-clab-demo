@@ -1,131 +1,106 @@
-# ZTP Clab Demo
+# ZTP Containerlab Demo
 
-A containerlab topology for testing Arista Zero Touch Provisioning (ZTP).
+A containerlab topology demonstrating Arista Zero Touch Provisioning (ZTP) — switches boot with no configuration, receive a bootstrap script via DHCP, and configure themselves automatically.
 
-## What is ZTP?
+Two bootstrap workflows are included:
 
-Zero Touch Provisioning (ZTP) allows Arista switches to automatically configure
-themselves when they boot up for the first time. Instead of manually logging into
-each switch, ZTP automates the process:
-
-1. The switch boots with no configuration
-2. It sends a DHCP request to get an IP address
-3. The DHCP server also tells the switch where to find a bootstrap script
-4. The switch downloads and runs the bootstrap script, which configures it
+- **`bootstrap.py`** — Standalone ZTP: downloads an EOS image (if needed) and a per-device config from an HTTP server, then applies it.
+- **`bootstrap-cv.py`** — CloudVision ZTP: enrolls the switch into CVaaS/on-prem CV using an enrollment token, then executes the CV-provided bootstrap.
 
 ## Topology
 
 ```
-                   Management Network (172.100.100.0/24)
-                   ┌──────────┬──────────┬──────────┐
-                   │          │          │          │
-              ┌────┴────┐ ┌──┴───┐ ┌───┴────┐     │
-              │  switch3 │ │switch1│ │switch2 │   (gateway)
-              │  (server)│ │ (ZTP) │ │ (ZTP)  │
-              │ DHCP+HTTP│ │      │ │        │
-              └─────────┘ └──┬───┘ └───┬────┘
-                              │   et1   │
-                              └─────────┘
+                  ┌─────────────┐
+                  │  mgmt-sw01  │
+                  │ DHCP + HTTP │
+                  └──┬───┬───┬──┘
+           et1       │   │   │
+     ┌───────────────┘   │   └───────────────┐
+     │            et2    │            et3     │
+┌────┴──────┐   ┌───────┴───────┐   ┌───────┴───────┐
+│ztp-switch1│   │  ztp-switch2  │   │  ztp-switch3  │
+│   (ZTP)   │   │    (ZTP)      │   │    (ZTP)      │
+└───────────┘   └───────────────┘   └───────────────┘
 ```
 
-| Node | Role | Management IP |
-|------|------|---------------|
-| ztp-switch1 | ZTP client (boots with no config) | 172.100.100.101 |
-| ztp-switch2 | ZTP client (boots with no config) | 172.100.100.102 |
-| ztp-switch3 | ZTP server (DHCP + HTTP) | 172.100.100.103 |
+| Node | Role | Mgmt IP |
+|------|------|---------|
+| mgmt-sw01 | ZTP server (DHCP + NGINX) | 192.168.128.104 |
+| ztp-switch1 | ZTP client | 192.168.128.101 |
+| ztp-switch2 | ZTP client | 192.168.128.102 |
+| ztp-switch3 | ZTP client | 192.168.128.103 |
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/)
+- Docker
 - [Containerlab](https://containerlab.dev/install/)
-- Arista cEOS image imported as `arista/ceos:latest`
+- Arista cEOS image imported:
   ```bash
-  docker import cEOS64-lab-<version>.tar arista/ceos:latest
+  docker import cEOS64-lab-<version>.tar ceos:<version>
   ```
 
 ## Quick Start
 
 ```bash
-# Deploy the lab
-containerlab deploy -t clab/topology.clab.yml
-
-# Check that all containers are running
-docker ps
-
-# Connect to a ZTP switch to watch the ZTP process
-docker exec -it ztp-switch1 Cli
-
-# On the switch, check ZTP status
-show zerotouch
-
-# Connect to the ZTP server
-docker exec -it ztp-switch3 Cli
-
-# Tear down the lab when done
-containerlab destroy -t clab/topology.clab.yml
+make start     # deploy the lab
+make inspect   # show node IPs and status
+make stop      # tear down the lab
 ```
+
+Connect to a switch:
+
+```bash
+docker exec -it ztp-switch1 Cli
+show zerotouch
+```
+
+## How It Works
+
+1. **mgmt-sw01** boots with a full config: DHCP server on the management network, NGINX serving bootstrap scripts and configs.
+2. **ztp-switch{1,2,3}** boot with empty configs and enter ZTP mode.
+3. Each ZTP switch sends a DHCP discover; mgmt-sw01 responds with an IP and the bootstrap script URL.
+4. The switch downloads and executes the bootstrap script.
 
 ## File Structure
 
 ```
 clab/
-  topology.clab.yml       # Main topology definition
+  topology.clab.yml          # Containerlab topology
   configs/
-    empty.cfg              # Empty config (used by ZTP switches)
-    ztp-switch3.cfg        # ZTP server config (DHCP + HTTP)
-  sn/
-    ztp-switch1.txt        # Serial number for switch 1
-    ztp-switch2.txt        # Serial number for switch 2
-    ztp-switch3.txt        # Serial number for switch 3
+    empty.cfg                # Empty config for ZTP switches
+    mgmt-sw01.cfg            # DHCP + NGINX server config
   bootstrap/
-    bootstrap.py           # Python bootstrap script served to ZTP switches
-  zerotouch-config         # Controls whether ZTP is enabled on the switches
+    bootstrap.py             # Standalone bootstrap (no CV)
+    bootstrap-cv.py          # CloudVision bootstrap
+  boot_configs/
+    <serial>.cfg             # Per-device configs (keyed by serial number)
+  eos_images/
+    EOS-<version>.swi        # EOS images served to ZTP switches
+  sn/
+    *.txt                    # Serial number files for each node
+  zerotouch-config           # Controls ZTP mode on boot
 ```
 
-## How ZTP Works in This Lab
+## Virtual Caveats
 
-1. **ztp-switch3** boots first with a full configuration that includes:
-   - A DHCP server listening on the management network
-   - A Python HTTP server on port 80 serving files from `/mnt/flash/bootstrap/`
+This lab runs on cEOS, which has some differences from hardware:
 
-2. **ztp-switch1** and **ztp-switch2** boot with no configuration and enter ZTP mode
+- **No real reload** — `bootstrap.py` simulates the boot-system/reload step since cEOS doesn't support it the same way. On real hardware, the switch would install the SWI and reload.
+- **zerotouch-config** — The file is bind-mounted and may not be deletable from within the container. The bootstrap uses `zerotouch cancel` instead.
+- **NTP sync** — `bootstrap-cv.py` requires NTP sync before contacting CV. In a virtual lab, NTP may behave differently than on physical switches.
 
-3. Each ZTP switch sends a DHCP discover on the management interface
+## Customization
 
-4. ztp-switch3's DHCP server responds with:
-   - An IP address (from the 172.100.100.201-210 range)
-   - The bootstrap script filename (`bootstrap.py`)
-   - The HTTP server address (172.100.100.103)
+Edit `bootstrap.py` to change the standalone ZTP logic (server IP, desired EOS version, config retrieval). For CV enrollment, update `bootstrap-cv.py` with your `cvAddr`, `enrollmentToken`, and `ntpServer`.
 
-5. The ZTP switch downloads `bootstrap.py` from `http://172.100.100.103/bootstrap.py`
-   and executes it
+Per-device configs go in `clab/boot_configs/` named by serial number (e.g., `JPE10000011.cfg`).
 
-## Customizing the Bootstrap Script
+## Disabling AppArmor (Ubuntu)
 
-Edit `clab/bootstrap/bootstrap.py` with your desired ZTP logic. Common tasks:
-- Apply a startup configuration
-- Install EOS extensions
-- Register with a management platform (e.g., CloudVision)
-
-## Removnig AppArmor
-
-Disabling apparomor 
+If containerlab has permission issues on Ubuntu:
 
 ```bash
-sudo vi /etc/default/grub
-```
-
-Change the line
-
-```bash
-GRUB_CMDLINE_LINUX=""
-to
-GRUB_CMDLINE_LINUX="apparmor=0"
-```
-
-Run the following to update and reboot
-
-```bash
+# Add apparmor=0 to GRUB_CMDLINE_LINUX in /etc/default/grub
 sudo update-grub
 sudo reboot
 ```
