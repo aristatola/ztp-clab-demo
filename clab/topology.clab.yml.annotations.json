@@ -3,7 +3,17 @@
   "freeShapeAnnotations": [],
   "trafficRateAnnotations": [],
   "groupStyleAnnotations": [],
-  "networkNodeAnnotations": [],
+  "networkNodeAnnotations": [
+    {
+      "id": "macvlan:enp86s0",
+      "type": "macvlan",
+      "label": "macvlan:enp86s0",
+      "position": {
+        "x": 240,
+        "y": 80
+      }
+    }
+  ],
   "nodeAnnotations": [
     {
       "id": "ztp-switch1",
