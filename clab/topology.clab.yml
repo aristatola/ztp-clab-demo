@@ -111,7 +111,13 @@ topology:
   # This link is for testing connectivity after ZTP completes.
   # (ZTP itself happens over the management network, not this link.)
   links:
+
+    # Server Connections
     - endpoints: ["server01:et1", "ztp-switch1:et2"]
-    - endpoints: ["ztp-switch1:et3", "ztp-switch2:et3"]
+    # - endpoints: ["server01:et2", "ztp-switch2:et2"]
+    - endpoints: ["server01:et3", "macvlan:enp86s0"]
+
+    # Switch Connections
     - endpoints: ["ztp-switch1:et1", "ztp-switch3:et1"]
     - endpoints: ["ztp-switch2:et1", "ztp-switch3:et2"]
+    - endpoints: ["ztp-switch1:et3", "ztp-switch2:et3"]
