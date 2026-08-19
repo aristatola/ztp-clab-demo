@@ -63,7 +63,7 @@ topology:
         - sn/ztp-switch1.txt:/mnt/flash/ceos-config:ro
         # ZTP control file — when this does NOT contain "DISABLE=True",
         # the switch will enter ZTP mode on boot
-        - zerotouch-config:/mnt/flash/zerotouch-config:ro
+        - zerotouch-config:/mnt/flash/zerotouch-config:rw
       ports:
         - 4001:443/tcp
 
@@ -74,21 +74,18 @@ topology:
       startup-config: configs/empty.cfg
       binds:
         - sn/ztp-switch2.txt:/mnt/flash/ceos-config:ro
-        - zerotouch-config:/mnt/flash/zerotouch-config:ro
+        - zerotouch-config:/mnt/flash/zerotouch-config:rw
       ports:
         - 4002:443/tcp
 
-    # ---- ZTP Switch 3 (ZTP server — DHCP + HTTP) ----
-    # This switch boots with a full configuration. It is NOT in ZTP mode.
-    # It runs a DHCP server and an HTTP server to deliver the bootstrap
-    # script to ztp-switch1 and ztp-switch2.
+    # ---- ZTP Switch 3 (boots into ZTP mode) ----
     ztp-switch3:
       kind: arista_ceos
       mgmt-ipv4: 192.168.128.103
       startup-config: configs/empty.cfg
       binds:
         - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
-        - zerotouch-config:/mnt/flash/zerotouch-config:ro
+        - zerotouch-config:/mnt/flash/zerotouch-config:rw
       ports:
         - 4003:443/tcp
 
@@ -98,9 +95,11 @@ topology:
       # Full startup config — DHCP server + HTTP server for bootstrap delivery
       startup-config: configs/mgmt-sw01.cfg
       binds:
-        - sn/ztp-switch3.txt:/mnt/flash/ceos-config:ro
+        - sn/mgmt-sw01.txt:/mnt/flash/ceos-config:ro
         # Bootstrap script directory — served over HTTP to ZTP switches
-        - bootstrap/:/usr/share/nginx/html/eapi/:ro
+        - bootstrap/:/usr/share/nginx/html/ztp/:ro
+        - boot_configs/:/usr/share/nginx/html/configs/:ro
+        - eos_images/:/usr/share/nginx/html/images/:ro
       ports:
         - 4004:443/tcp
     
