@@ -85,6 +85,32 @@ def get_show_version():
     return json.loads(output)
 
 
+def get_inband_ip():
+    """Get the DHCP-assigned IP from a non-management interface."""
+    rc, output = run_cli(["show ip interface brief | json"])
+    if rc != 0:
+        return None
+    data = json.loads(output)
+    for name, info in data.get("interfaces", {}).items():
+        if name.startswith("Management"):
+            continue
+        addr = info.get("interfaceAddress", {}).get("ipAddr", {}).get("address", "")
+        if addr:
+            return addr
+    return None
+
+
+def set_temp_hostname():
+    """Set a temporary hostname based on the DHCP-assigned inband IP."""
+    ip = get_inband_ip()
+    if not ip:
+        log("Could not determine inband IP, skipping temporary hostname")
+        return
+    hostname = "sw-%s" % ip
+    log("Setting temporary hostname: %s" % hostname)
+    run_cli(["enable", "configure", "hostname %s" % hostname, "end"])
+
+
 def download_file(url, destination):
     """Download a file via HTTPS."""
     log("Downloading %s -> %s" % (url, destination))
@@ -167,6 +193,9 @@ def main():
     log("Server: %s | Image Dir: %s | Config Dir: %s" % (
         SERVER_IP, EOS_IMAGE_DIR, CONFIG_DIR))
     log("=" * 60)
+
+    # Set a temporary hostname so the device is identifiable during ZTP
+    set_temp_hostname()
 
     # Step 1: Get device information
     version_info = get_show_version()
