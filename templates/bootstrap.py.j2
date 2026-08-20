@@ -62,16 +62,16 @@ def run_cli(cmd_list):
     cmds = "\n".join(cmd_list)
     try:
         output = subprocess.check_output(
-            "echo -e '" + cmds + "' | " + FAST_CLI_BINARY,
+            f"echo -e '{cmds}' | {FAST_CLI_BINARY}",
             shell=True, stderr=subprocess.STDOUT, universal_newlines=True,
         )
     except subprocess.CalledProcessError as e:
-        log("Error running commands [%s]: %s" % (cmds, e.output))
+        log(f"Error running commands [{cmds}]: {e.output}")
         return (e.returncode, e.output)
 
     for line in output.split("\n"):
         if line.startswith("%"):
-            log("Error running commands [%s]: %s" % (cmds, output))
+            log(f"Error running commands [{cmds}]: {output}")
             return (1, output)
     return (0, output)
 
@@ -81,7 +81,7 @@ def get_show_version():
     log("Retrieving device information via 'show version'...")
     rc, output = run_cli(["show version | json"])
     if rc != 0:
-        raise RuntimeError("Failed to run 'show version': %s" % output)
+        raise RuntimeError(f"Failed to run 'show version': {output}")
     return json.loads(output)
 
 
@@ -106,14 +106,14 @@ def set_temp_hostname():
     if not ip:
         log("Could not determine inband IP, skipping temporary hostname")
         return
-    hostname = "sw-%s" % ip
-    log("Setting temporary hostname: %s" % hostname)
-    run_cli(["enable", "configure", "hostname %s" % hostname, "end"])
+    hostname = f"sw-{ip}"
+    log(f"Setting temporary hostname: {hostname}")
+    run_cli(["enable", "configure", f"hostname {hostname}", "end"])
 
 
 def download_file(url, destination):
     """Download a file via HTTPS."""
-    log("Downloading %s -> %s" % (url, destination))
+    log(f"Downloading {url} -> {destination}")
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -121,33 +121,33 @@ def download_file(url, destination):
         response = urllib.request.urlopen(url, context=ctx)
         with open(destination, "wb") as f:
             f.write(response.read())
-        log("Download successful: %s" % destination)
+        log(f"Download successful: {destination}")
         return True
     except (urllib.error.URLError, IOError) as e:
-        log("Download failed for %s: %s" % (url, e))
+        log(f"Download failed for {url}: {e}")
         return False
 
 
 def download_eos_image():
     """Download desired EOS image from HTTP server."""
-    image_filename = "EOS-%s.swi" % DESIRED_EOS_VERSION
-    url = "https://%s/%s/%s" % (SERVER_IP, EOS_IMAGE_DIR, image_filename)
-    destination = "/mnt/flash/%s" % image_filename
+    image_filename = f"EOS-{DESIRED_EOS_VERSION}.swi"
+    url = f"https://{SERVER_IP}/{EOS_IMAGE_DIR}/{image_filename}"
+    destination = f"/mnt/flash/{image_filename}"
     return download_file(url, destination)
 
 
 def download_config(serial_number):
     """Download switch configuration based on serial number."""
-    config_filename = "%s.cfg" % serial_number
-    url = "https://%s/%s/%s" % (SERVER_IP, CONFIG_DIR, config_filename)
+    config_filename = f"{serial_number}.cfg"
+    url = f"https://{SERVER_IP}/{CONFIG_DIR}/{config_filename}"
     destination = "/mnt/flash/startup-config"
     return download_file(url, destination)
 
 
 def simulate_boot_image():
     """Simulate setting boot image and reloading (not supported on cEOS)."""
-    image_filename = "EOS-%s.swi" % DESIRED_EOS_VERSION
-    log("[SIMULATED] Would run: 'boot system flash:%s'" % image_filename)
+    image_filename = f"EOS-{DESIRED_EOS_VERSION}.swi"
+    log(f"[SIMULATED] Would run: 'boot system flash:{image_filename}'")
     log("[SIMULATED] Would reload switch to apply new image")
     time.sleep(BOOT_SLEEP_TIME)  # Simulate time taken for reload
 
@@ -158,15 +158,15 @@ def cancel_zerotouch():
     # TODO: File set to RW in topology.clab.yml, but cEOS does not allow deletion of this file?
     # zt_config = "/mnt/flash/zerotouch-config"
     # if os.path.isfile(zt_config):
-    #     log("Removing %s" % zt_config)
+    #     log(f"Removing {zt_config}")
     #     os.remove(zt_config)
     # else:
-    #     log("zerotouch-config not found at %s, skipping removal" % zt_config)
+    #     log(f"zerotouch-config not found at {zt_config}, skipping removal")
 
     log("Running 'zerotouch cancel'...")
     rc, output = run_cli(["enable", "zerotouch cancel"])
     if rc != 0:
-        log("zerotouch cancel failed: %s" % output)
+        log(f"zerotouch cancel failed: {output}")
     else:
         log("zerotouch cancel completed successfully")
 
@@ -182,7 +182,7 @@ def apply_config_and_restart():
         )
         log("ProcMgr restart initiated successfully")
     except subprocess.CalledProcessError as e:
-        log("Failed to restart ProcMgr: %s" % e.output)
+        log(f"Failed to restart ProcMgr: {e.output}")
 
 
 def main():
@@ -190,8 +190,7 @@ def main():
 
     log("=" * 60)
     log("ZTP Bootstrap Script Starting")
-    log("Server: %s | Image Dir: %s | Config Dir: %s" % (
-        SERVER_IP, EOS_IMAGE_DIR, CONFIG_DIR))
+    log(f"Server: {SERVER_IP} | Image Dir: {EOS_IMAGE_DIR} | Config Dir: {CONFIG_DIR}")
     log("=" * 60)
 
     # Set a temporary hostname so the device is identifiable during ZTP
@@ -200,12 +199,12 @@ def main():
     # Step 1: Get device information
     version_info = get_show_version()
     serial_number = version_info.get("serialNumber", "unknown")
-    log("Device serial number: %s" % serial_number)
+    log(f"Device serial number: {serial_number}")
 
     # Step 2: Check EOS version, download image if mismatched
     current_version = version_info.get("version", "unknown")
-    log("Current EOS version: %s" % current_version)
-    log("Desired EOS version: %s" % DESIRED_EOS_VERSION)
+    log(f"Current EOS version: {current_version}")
+    log(f"Desired EOS version: {DESIRED_EOS_VERSION}")
 
     if current_version == DESIRED_EOS_VERSION:
         log("EOS version matches desired version, skipping image download")
@@ -217,7 +216,7 @@ def main():
             log("EOS image download failed, continuing with config provisioning")
 
     # Step 3: Download configuration by serial number
-    log("Fetching configuration for serial number: %s" % serial_number)
+    log(f"Fetching configuration for serial number: {serial_number}")
     if download_config(serial_number):
         log("Configuration saved to /mnt/flash/startup-config")
         # Step 4: Cancel ZTP to prevent boot loop
@@ -225,7 +224,7 @@ def main():
         # Step 5: Apply config and restart services
         apply_config_and_restart()
     else:
-        log("Configuration download failed for serial: %s" % serial_number)
+        log(f"Configuration download failed for serial: {serial_number}")
 
     log("=" * 60)
     log("ZTP Bootstrap Script Complete")
