@@ -25,19 +25,7 @@ make stop           Tear down the entire lab
 
 ## Topology
 
-```
-                  ┌─────────────┐
-                  │  mgmt-sw01  │
-                  │ DHCP + HTTPS│
-                  └──┬───┬───┬──┘
-           et1       │   │   │
-     ┌───────────────┘   │   └───────────────┐
-     │            et2    │            et3    │
-┌────┴──────┐    ┌───────┴───────┐   ┌───────┴───────┐
-│ztp-switch1│    │  ztp-switch2  │   │  ztp-switch3  │
-│   (ZTP)   │    │    (ZTP)      │   │    (ZTP)      │
-└───────────┘    └───────────────┘   └───────────────┘
-```
+![ZTP Topology](./docs/images/ztp-demo.png)
 
 | Node | Role | Mgmt IP |
 |------|------|---------|
