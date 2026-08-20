@@ -43,7 +43,7 @@ topology:
       # When false, the switch won't enforce a startup config on boot.
       # This is required for ZTP — the switch must boot "clean" with no config.
       enforce-startup-config: false
-      image: ceos:4.35.6M
+      image: {{ ceos_image }}
       env:
         # Place the management interface in VRF "MGMT" (standard Arista practice)
         CLAB_MGMT_VRF: MGMT
@@ -111,9 +111,11 @@ topology:
   # ---------------------------------------------------------------------------
   # ZTP happens over the inband VLAN (192.168.130.0/24), not the management network.
   links:
+{%- if enable_bridge %}
 
     # Uplink — macvlan bridge to host NIC for external connectivity
-    - endpoints: ["mgmt-sw01:et10", "macvlan:enp86s0"]
+    - endpoints: ["mgmt-sw01:et10", "macvlan:{{ bridge_interface }}"]
+{%- endif %}
 
     # Mgmt-sw01 to ZTP switches (inband ZTP network)
     - endpoints: ["mgmt-sw01:et1", "ztp-switch1:et10"]

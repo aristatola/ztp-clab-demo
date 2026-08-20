@@ -22,10 +22,10 @@ import base64
 # By default, windows uses (CR LF), you need to convert the newline char to linux (LF).
 
 # address for CVaaS, usually just "www.arista.io"
-cvAddr = "www.cv-staging.corp.arista.io"
+cvAddr = "{{ cv_url }}"
 
 # enrollment token to be copied from CVaaS Device Registration page
-enrollmentToken = "token-here"
+enrollmentToken = "{{ enrollment_token }}"
 
 # Add proxy url if device is behind proxy server, leave it as an empty string otherwise
 cvproxy = ""
@@ -41,7 +41,7 @@ which is to sync the clock before it reaches out to CV.
 For example:
 ntpServer = "ntp1.aristanetworks.com"
 '''
-ntpServer = "50.205.57.38"
+ntpServer = "{{ ntp_server }}"
 
 
 ##############  CONSTANTS  ##############

@@ -4,6 +4,8 @@
 
 tmp/
 images/
+.venv/
+venv/   
 
 ### Ansible ###
 *.retry

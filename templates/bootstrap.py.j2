@@ -29,14 +29,14 @@ import time
 SERVER_IP = "192.168.130.1"
 EOS_IMAGE_DIR = "images"
 CONFIG_DIR = "configs"
-DESIRED_EOS_VERSION = "4.35.7M"
+DESIRED_EOS_VERSION = "{{ desired_eos_version }}"
 
 # =============================================================================
 # Logging — syslog + stdout (matches Arista bootstrap pattern)
 # =============================================================================
 FAST_CLI_BINARY = "/usr/bin/FastCli"
-BOOT_SLEEP_TIME = 15
-RESTART_WAIT_TIME = 15
+BOOT_SLEEP_TIME = {{ boot_sleep_time }}
+RESTART_WAIT_TIME = {{ restart_wait_time }}
 
 logger = None
 

@@ -1,3 +1,5 @@
+{#- NOTE: This file is auto-generated from templates/mgmt-sw01.cfg.j2
+   Edit demo-config.yaml and run 'make generate' to regenerate. -#}
 !
 no aaa root
 !
@@ -26,7 +28,11 @@ dhcp server
       range 192.168.130.240 192.168.130.254
       lease time 0 days 12 hours 0 minutes
       default-gateway 192.168.130.1
+{%- if bootstrap_type == "cloudvision" %}
+      tftp server file https://192.168.130.1/ztp/bootstrap-cv.py
+{%- else %}
       tftp server file https://192.168.130.1/ztp/bootstrap.py
+{%- endif %}
 !
 no service interface inactive port-id allocation disabled
 !
@@ -46,11 +52,13 @@ vlan 1
 !
 vrf instance MGMT
 !
+{%- if enable_bridge %}
 interface Ethernet10
    description UPLINK
    no switchport
-   ip address 10.0.100.226/24
+   ip address {{ egress_ip }}
 !
+{%- endif %}
 interface Management0
    vrf MGMT
    ip address 192.168.128.104/24
@@ -61,10 +69,15 @@ interface Vlan1
    ip address 192.168.130.1/24
    dhcp server ipv4
 !
+event-handler HTTP_SERVER
+   trigger on-boot
+!
 ip routing
 ip routing vrf MGMT
 !
-ip route 0.0.0.0/0 10.0.100.1
+{%- if enable_bridge %}
+ip route 0.0.0.0/0 {{ egress_gateway }}
+{%- endif %}
 ip route vrf MGMT 0.0.0.0/0 192.168.128.1
 !
 end

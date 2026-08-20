@@ -1,0 +1,38 @@
+# =============================================================================
+# ZTP Lab Configuration
+# =============================================================================
+# Edit this file to customize your lab, then run: make start
+# All generated files (topology, switch configs, bootstrap scripts) are
+# rendered from templates using these values.
+# =============================================================================
+
+# === Lab Settings ===
+ceos_image: "ceos:4.35.6M"
+
+# === Network Connectivity ===
+# When enabled, creates a macvlan link from mgmt-sw01 to your host NIC,
+# giving the lab external network access.
+enable_bridge: true
+bridge_interface: "enp86s0"          # Your host NIC name (ip link show)
+egress_ip: "10.0.100.226/24"         # IP address for mgmt-sw01 Ethernet10
+egress_gateway: "10.0.100.1"         # Default route via Ethernet10
+
+# === Bootstrap Type ===
+# "local"       — Serve static configs and EOS images from mgmt-sw01
+# "cloudvision" — Enroll switches into CloudVision (CVaaS or on-prem)
+bootstrap_type: "local"
+
+# --- Local Bootstrap Settings ---
+# Must match a filename in clab/eos_images/ (e.g., "4.35.7M" → EOS-4.35.7M.swi)
+# If the switch's running version matches, image download is skipped.
+desired_eos_version: "4.35.7M"
+
+# --- CloudVision Bootstrap Settings ---
+cv_url: "www.cv-staging.corp.arista.io"
+enrollment_token: "token-here"
+ntp_server: "50.205.57.38"
+
+# === Timing (seconds) ===
+# Pauses in the bootstrap script for observability during the demo.
+boot_sleep_time: 15                  # Pause after simulated image install
+restart_wait_time: 15                # Pause before ProcMgr restart
