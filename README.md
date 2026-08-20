@@ -32,7 +32,7 @@ make stop           Tear down the entire lab
                   └──┬───┬───┬──┘
            et1       │   │   │
      ┌───────────────┘   │   └───────────────┐
-     │            et2    │            et3     │
+     │            et2    │            et3    │
 ┌────┴──────┐    ┌───────┴───────┐   ┌───────┴───────┐
 │ztp-switch1│    │  ztp-switch2  │   │  ztp-switch3  │
 │   (ZTP)   │    │    (ZTP)      │   │    (ZTP)      │
