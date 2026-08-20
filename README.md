@@ -265,6 +265,10 @@ If containerlab has permission issues on Ubuntu:
 
 ```bash
 # Add apparmor=0 to GRUB_CMDLINE_LINUX in /etc/default/grub
+sudo vi /etc/default/grub
+GRUB_CMDLINE_LINUX="apparmor=0"
+
+# Then run update and reboot
 sudo update-grub
 sudo reboot
 ```
@@ -281,4 +285,4 @@ Update `bridge_interface` in `demo-config.yaml` to match, or set `enable_bridge:
 
 ### External access to lab network
 
-If you need to reach the 192.168.128.0/24 management network from your host, you may need static routes. The lab uses containerlab's built-in management network for this subnet. See `tmp/containerlab-mgmt-access-troubleshooting.md` for notes on nftables/iptables issues.
+If you need to reach the 192.168.128.0/24 management network from your host, you may need static routes. The lab uses containerlab's built-in management network for this subnet. 
