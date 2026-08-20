@@ -43,13 +43,13 @@ ztp-stop: ## Disable web server on mgmt-sw01 (stops ZTP)
 ztp-reset: ## Reset to ZTP mode (all ZTP switches, or DEV=<node> for one)
 ifeq ($(origin DEV),command line)
 	@echo "Resetting $(DEV) to ZTP mode..."
-	@docker exec $(DEV) Cli -p 15 -c "delete flash:startup-config" -c "bash sudo service ProcMgr restart"
+	-@docker exec $(DEV) Cli -p 15 -c "run delete flash:startup-config; bash sudo service ProcMgr restart"
 	@echo "$(DEV) reset complete."
 else
 	@echo "Resetting all ZTP switches to ZTP mode..."
 	@for sw in $(ZTP_SWITCHES); do \
 		echo "  Resetting $$sw..."; \
-		docker exec $$sw Cli -p 15 -c "delete flash:startup-config" -c "bash sudo service ProcMgr restart"; \
+		docker exec $$sw Cli -p 15 -c "run delete flash:startup-config; bash sudo service ProcMgr restart" || true; \
 	done
 	@echo "All ZTP switches reset."
 endif
