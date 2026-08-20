@@ -1,5 +1,6 @@
 CURRENT_DIR := $(shell pwd)
 DEV ?= ztp-switch1
+ZTP_SWITCHES := ztp-switch1 ztp-switch2 ztp-switch3
 
 .PHONY: help
 help: ## Display help message
@@ -22,34 +23,6 @@ stop: ## Destroy lab
 inspect: ## Show lab node IPs and status
 	@sudo containerlab inspect --topo $(CURRENT_DIR)/clab/topology.clab.yml
 	@echo ""
-<<<<<<< HEAD
-	@echo "You can check the lab status, hostnames and management addresses above."
-	@echo "To connect to a lab device use \`ssh admin@<hostname>\` and password \`admin\`."
-
-.PHONY: ssh-sw1
-ssh-sw1: ## Connect to switch1
-	docker exec -it ztp-switch1 Cli
-
-.PHONY: ssh-sw2
-ssh-sw2: ## Connect to switch2
-	docker exec -it ztp-switch2 Cli
-
-.PHONY: ssh-sw3
-ssh-sw3: ## Connect to switch3
-	docker exec -it ztp-switch3 Cli
-
-.PHONY: watch-sw1
-watch-sw1: ## Destroy ceos lab
-	docker logs ztp-switch1 -f
-
-.PHONY: watch-sw2
-watch-sw2: ## Destroy ceos lab
-	docker logs ztp-switch2 -f
-
-.PHONY: watch-sw3
-watch-sw3: ## Destroy ceos lab
-	docker logs ztp-switch3 -f
-=======
 	@echo "Credentials: admin/admin or arista/arista"
 	@echo "Console:     make console DEV=<node>"
 	@echo "Logs:        make logs DEV=<node>"
@@ -66,6 +39,21 @@ ztp-stop: ## Disable web server on mgmt-sw01 (stops ZTP)
 	@docker exec mgmt-sw01 Cli -p 15 -c "web off"
 	@echo "Web server disabled."
 
+.PHONY: ztp-reset
+ztp-reset: ## Reset to ZTP mode (all ZTP switches, or DEV=<node> for one)
+ifeq ($(origin DEV),command line)
+	@echo "Resetting $(DEV) to ZTP mode..."
+	@docker exec $(DEV) Cli -p 15 -c "delete flash:startup-config" -c "bash sudo service ProcMgr restart"
+	@echo "$(DEV) reset complete."
+else
+	@echo "Resetting all ZTP switches to ZTP mode..."
+	@for sw in $(ZTP_SWITCHES); do \
+		echo "  Resetting $$sw..."; \
+		docker exec $$sw Cli -p 15 -c "delete flash:startup-config" -c "bash sudo service ProcMgr restart"; \
+	done
+	@echo "All ZTP switches reset."
+endif
+
 .PHONY: console
 console: ## Open EOS CLI on a device (DEV=<node>, default: ztp-switch1)
 	docker exec -it $(DEV) Cli
@@ -73,4 +61,3 @@ console: ## Open EOS CLI on a device (DEV=<node>, default: ztp-switch1)
 .PHONY: logs
 logs: ## Follow container logs (DEV=<node>, default: ztp-switch1)
 	docker logs $(DEV) -f
->>>>>>> 16861f9 (Adding configuration capabilities)
