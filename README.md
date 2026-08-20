@@ -7,6 +7,22 @@ Two bootstrap workflows are included:
 - **Local bootstrap** (`bootstrap.py`) — Downloads an EOS image (if version mismatches) and a per-device config from an HTTP server on `mgmt-sw01`, then applies it.
 - **CloudVision bootstrap** (`bootstrap-cv.py`) — Enrolls the switch into CVaaS or on-prem CloudVision using an enrollment token, then executes the CV-provided bootstrap.
 
+## Demo Lifecycle
+
+```
+make start          Deploy the lab (web server off, switches in ZTP mode)
+     │
+make ztp-start      Enable web server → switches download bootstrap → ZTP completes
+     │
+make ztp-stop       Disable web server (MUST do before reset, or switches re-ZTP immediately)
+     │
+make ztp-reset      Wipe startup-config and restart switches → back to ZTP mode
+     │
+make ztp-start      Re-enable web server → ZTP runs again
+     │
+make stop           Tear down the entire lab
+```
+
 ## Topology
 
 ```
@@ -121,10 +137,27 @@ make logs DEV=ztp-switch1
 make console DEV=ztp-switch1
 ```
 
-### 6. Stop ZTP / Tear down
+### 6. Reset and re-run ZTP
+
+To wipe the switches and re-run ZTP from scratch:
 
 ```bash
-make ztp-stop     # Disable the web server (stops serving bootstraps)
+make ztp-stop         # MUST stop the web server first, or switches re-ZTP immediately
+make ztp-reset        # Wipe startup-config on all ZTP switches and restart them
+make ztp-start        # Re-enable web server → ZTP runs again
+```
+
+To reset a single switch:
+
+```bash
+make ztp-stop
+make ztp-reset DEV=ztp-switch2
+make ztp-start
+```
+
+### 7. Tear down
+
+```bash
 make stop         # Destroy the entire lab
 ```
 
