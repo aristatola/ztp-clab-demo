@@ -1,6 +1,42 @@
 {
-  "freeTextAnnotations": [],
-  "freeShapeAnnotations": [],
+  "freeTextAnnotations": [
+    {
+      "id": "freeText_1787236501520",
+      "text": "DHCP Server\nWeb Server (bootstrap)",
+      "position": {
+        "x": 496.7103659748973,
+        "y": 398.60649663881776
+      },
+      "fontSize": 14,
+      "fontColor": "#ffffff",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial",
+      "width": 166,
+      "height": 62
+    }
+  ],
+  "freeShapeAnnotations": [
+    {
+      "id": "freeShape_1787236520870",
+      "shapeType": "rectangle",
+      "position": {
+        "x": 494.1696197412207,
+        "y": 353.06675608911297
+      },
+      "width": 184,
+      "height": 109,
+      "fillColor": "rgba(127, 127, 127, 0.16)",
+      "fillOpacity": 0.2,
+      "borderColor": "#cccccc",
+      "borderWidth": 1,
+      "borderStyle": "solid",
+      "rotation": 0,
+      "zIndex": -1
+    }
+  ],
   "trafficRateAnnotations": [],
   "groupStyleAnnotations": [],
   "networkNodeAnnotations": [
@@ -9,7 +45,7 @@
       "type": "macvlan",
       "label": "macvlan:enp86s0",
       "position": {
-        "x": 700,
+        "x": 720,
         "y": 360
       }
     }
@@ -20,31 +56,75 @@
       "position": {
         "x": 380,
         "y": 260
-      }
+      },
+      "labelPosition": "top",
+      "icon": "spine"
     },
     {
       "id": "ztp-switch2",
       "position": {
         "x": 380,
         "y": 460
-      }
+      },
+      "icon": "spine"
     },
     {
       "id": "ztp-switch3",
       "position": {
         "x": 240,
         "y": 360
-      }
+      },
+      "labelPosition": "top",
+      "icon": "leaf"
     },
     {
       "id": "mgmt-sw01",
       "position": {
         "x": 500,
         "y": 360
-      }
+      },
+      "labelPosition": "top",
+      "icon": "pe"
     }
   ],
-  "edgeAnnotations": [],
+  "edgeAnnotations": [
+    {
+      "id": "Clab-Link2",
+      "source": "mgmt-sw01",
+      "target": "ztp-switch2",
+      "sourceEndpoint": "et2",
+      "targetEndpoint": "et10",
+      "endpointLabelOffsetEnabled": true,
+      "endpointLabelOffset": 30
+    },
+    {
+      "id": "Clab-Link1",
+      "source": "mgmt-sw01",
+      "target": "ztp-switch1",
+      "sourceEndpoint": "et1",
+      "targetEndpoint": "et10",
+      "endpointLabelOffsetEnabled": true,
+      "endpointLabelOffset": 30
+    },
+    {
+      "id": "Clab-Link4",
+      "source": "ztp-switch1",
+      "target": "ztp-switch3",
+      "sourceEndpoint": "et1",
+      "targetEndpoint": "et1",
+      "endpointLabelOffsetEnabled": true,
+      "endpointLabelOffset": 30
+    },
+    {
+      "id": "Clab-Link5",
+      "source": "ztp-switch2",
+      "target": "ztp-switch3",
+      "sourceEndpoint": "et1",
+      "targetEndpoint": "et2",
+      "endpointLabelOffsetEnabled": true,
+      "endpointLabelOffset": 30
+    }
+  ],
   "aliasEndpointAnnotations": [],
   "viewerSettings": {}
 }

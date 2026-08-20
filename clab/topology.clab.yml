@@ -62,10 +62,7 @@ topology:
       # Empty startup config + zerotouch-config = switch enters ZTP on boot
       startup-config: configs/empty.cfg
       binds:
-        # Serial number file — gives the cEOS container a unique identity
         - sn/ztp-switch1.txt:/mnt/flash/ceos-config:ro
-        # ZTP control file — when this does NOT contain "DISABLE=True",
-        # the switch will enter ZTP mode on boot
         - zerotouch-config:/mnt/flash/zerotouch-config:rw
       ports:
         - 4001:443/tcp
@@ -99,7 +96,6 @@ topology:
       startup-config: configs/mgmt-sw01.cfg
       binds:
         - sn/mgmt-sw01.txt:/mnt/flash/ceos-config:ro
-        # Bootstrap script directory — served over HTTPS to ZTP switches
         - bootstrap/:/usr/share/nginx/html/ztp/:ro
         - boot_configs/:/usr/share/nginx/html/configs/:ro
         - eos_images/:/usr/share/nginx/html/images/:ro
@@ -113,14 +109,14 @@ topology:
   links:
 
     # Uplink — macvlan bridge to host NIC for external connectivity
-    - endpoints: ["mgmt-sw01:et10", "macvlan:enp86s0"]
+    - endpoints: [ "mgmt-sw01:et10", "macvlan:enp86s0" ]
 
     # Mgmt-sw01 to ZTP switches (inband ZTP network)
-    - endpoints: ["mgmt-sw01:et1", "ztp-switch1:et10"]
-    - endpoints: ["mgmt-sw01:et2", "ztp-switch2:et10"]
-    - endpoints: ["mgmt-sw01:et3", "ztp-switch3:et10"]
+    - endpoints: [ "mgmt-sw01:et1", "ztp-switch1:et10" ]
+    - endpoints: [ "mgmt-sw01:et2", "ztp-switch2:et10" ]
+    - endpoints: [ "mgmt-sw01:et3", "ztp-switch3:et10" ]
 
     # Inter-switch data plane links (used after ZTP completes)
-    - endpoints: ["ztp-switch1:et1", "ztp-switch3:et1"]
-    - endpoints: ["ztp-switch2:et1", "ztp-switch3:et2"]
-    - endpoints: ["ztp-switch1:et3", "ztp-switch2:et3"]
+    - endpoints: [ "ztp-switch1:et1", "ztp-switch3:et1" ]
+    - endpoints: [ "ztp-switch2:et1", "ztp-switch3:et2" ]
+    - endpoints: [ "ztp-switch1:et3", "ztp-switch2:et3" ]
